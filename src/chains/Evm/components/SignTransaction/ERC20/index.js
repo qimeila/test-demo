@@ -506,7 +506,7 @@ function ERC20() {
                   {
                     data.map((token) => (
                       <Col key={token.address}>
-                        <a href={`${['luoquanquan.github.io', 'localhost'].includes(window.location.hostname) ? process.env.PUBLIC_URL : ''}/?tokenAddress=${token.address}`}>
+                        <a href={`${['okfe.github.io', 'localhost'].includes(window.location.hostname) ? process.env.PUBLIC_URL : ''}/?tokenAddress=${token.address}`}>
                           {token.symbol}
                         </a>
                       </Col>

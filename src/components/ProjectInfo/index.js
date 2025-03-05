@@ -2,9 +2,9 @@ import { Card, Space } from 'antd-mobile';
 
 function ProjectInfo() {
   if (process.env.NODE_ENV === 'development') return null;
-  if (window.location.hostname !== 'luoquanquan.github.io') return null;
+  if (window.location.hostname !== 'okfe.github.io') return null;
 
-  const githubUrl = 'https://github.com/luoquanquan/dapp-demo';
+  const githubUrl = 'https://github.com/luoquanquan/test-demo';
 
   return (
     <Card title="项目信息">

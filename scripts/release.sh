@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-package_name="`date +%Y%m%d%H%M`-dapp-demo"
+package_name="`date +%Y%m%d%H%M`-test-demo"
 version="`date +%Y-%m-%d\ %H:%M:%S`"
 
 
