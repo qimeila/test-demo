@@ -19,6 +19,6 @@ Enjoy yourself ~
 ### release
 
 - `npm run release`
-- <https://luoquanquan.github.io/dapp-demo/>
+- <https://okfe.github.io/test-demo/>
 
 [LICENSE](./LICENSE)
