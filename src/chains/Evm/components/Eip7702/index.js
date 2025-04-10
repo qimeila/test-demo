@@ -28,10 +28,15 @@ function Eip7702() {
     const { chainId: newChainId } = infos[network];
     await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${newChainId.toString(16)}` }] });
   };
+
   const onFinish = async (values) => {
     await switchChain(values.selectedNetwork);
     const { callList } = values;
-    hstContract.executeFromSelf(callList || [], {
+    hstContract.executeFromSelf((callList || []).map(({ address, value, data }) => ({
+      target: address,
+      value: value ? `0x${(+value).toString(16)}` : 0,
+      data,
+    })), {
       from: account,
     });
   };
@@ -53,19 +58,18 @@ function Eip7702() {
   }, [chainId]);
 
   useEffect(() => {
-    if (!selectedNetwork) {
+    if (!account || !provider) {
       return;
     }
 
-    const { contractAddress } = infos[selectedNetwork];
     const newHstContract = new ethers.Contract(
-      contractAddress,
+      account,
       okxWalletCoreAbi,
       new ethers.providers.Web3Provider(provider, 'any').getSigner(),
     );
 
     setHstContract(newHstContract);
-  }, [account, provider, selectedNetwork]);
+  }, [account, provider]);
 
   useEffect(() => {
     (async () => {
