@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@ant-design/icons": "^6.0.0",
     "@babel/core": "^7.16.0",
     "@kaiachain/ethers-ext": "^1.1.1",
     "@mysten/dapp-kit": "^0.14.26",
