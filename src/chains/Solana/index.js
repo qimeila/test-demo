@@ -12,6 +12,7 @@ import { noop } from 'lodash';
 import Account from '../../components/Account';
 import SignMessage from './components/SignMessage';
 import SignTransaction from './components/SignTransaction';
+import Network from './components/Network';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -31,6 +32,7 @@ function Solana() {
       <Account account={account} />
       <SignMessage account={account} wallet={wallet} />
       <SignTransaction account={account} connection={connection} wallet={wallet} />
+      <Network />
     </Space>
   );
 }
