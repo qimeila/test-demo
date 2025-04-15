@@ -2,6 +2,7 @@ import {
   Button, Card, Input, Space,
 } from 'antd-mobile';
 import { useState } from 'react';
+import { Col, Row } from 'antd';
 import { toastFail, toastSuccess } from '../../../../utils/toast';
 
 function Network() {
@@ -33,22 +34,26 @@ function Network() {
   };
 
   return (
-    <Card title="Network">
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Card direction="vertical">
-          <Space style={{ width: '100%' }}>
-            <div>{`当前network:${network}`}</div>
-            <Button onClick={getNetwork}>getNetwork</Button>
-            <Input
-              value={genesisHash}
-              placeholder="请输入 genesisHash"
-              onChange={setGenesisHash}
-            />
-            <Button onClick={changeNetwork}>changeNetwork</Button>
+    <Row>
+      <Col xs={24} lg={12}>
+        <Card title="Network">
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Card direction="vertical">
+              <Space style={{ width: '100%' }} direction="vertical">
+                <div>{`当前network: ${network}`}</div>
+                <Button onClick={getNetwork}>getNetwork</Button>
+                <Input
+                  value={genesisHash}
+                  placeholder="请输入 genesisHash"
+                  onChange={setGenesisHash}
+                />
+                <Button onClick={changeNetwork}>changeNetwork</Button>
+              </Space>
+            </Card>
           </Space>
         </Card>
-      </Space>
-    </Card>
+      </Col>
+    </Row>
   );
 }
 
