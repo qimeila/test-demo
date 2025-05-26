@@ -16,7 +16,11 @@ const infos = {
     chainId: 11155111,
     contractAddress: '0xa9526ba55F7cABa1A6eB1cb4d555F29022ebFeed',
   },
+<<<<<<< Updated upstream
   ETH: {
+=======
+  eth: {
+>>>>>>> Stashed changes
     chainId: 1,
     contractAddress: '0x80296FF8D1ED46f8e3C7992664D13B833504c2Bb',
   },
@@ -90,7 +94,11 @@ function Eip7702() {
         <Radio.Group>
           <Radio.Button value="bnb">BNB</Radio.Button>
           <Radio.Button value="sepolia">Sepolia</Radio.Button>
+<<<<<<< Updated upstream
           <Radio.Button value="ETH">ETH</Radio.Button>
+=======
+          <Radio.Button value="eth">ETH</Radio.Button>
+>>>>>>> Stashed changes
         </Radio.Group>
       </Form.Item>
 
