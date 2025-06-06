@@ -1,10 +1,11 @@
 import {
   Row, Col,
 } from 'antd';
-import { Card, Button } from 'antd-mobile';
+import { Card, Button, Input } from 'antd-mobile';
 import { useContext, useState } from 'react';
 import dayjs from 'dayjs';
 import { sample } from 'lodash';
+import { ethers } from 'ethers';
 import EvmContext from '../../../../context';
 import { toastFail, toastSuccess } from '../../../../../../utils/toast';
 import {
@@ -334,204 +335,357 @@ function Permit({ chainId }) {
     }
   };
 
+  const [firstSignature, setFirstSignature] = useState('');
+  const [secondSignature, setSecondSignature] = useState('');
+  const [doublePermitLoading, setDoublePermitLoading] = useState(false);
+
+  const doublePermit = (spender = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45') => async () => {
+    try {
+      setDoublePermitLoading(true);
+      setFirstSignature('');
+      setSecondSignature('');
+
+      // 获取 USDC 合约实例
+      const usdcAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+      const usdcAbi = [
+        "function nonces(address owner) view returns (uint256)"
+      ];
+      const usdcContract = new ethers.Contract(
+        usdcAddress,
+        usdcAbi,
+        new ethers.providers.Web3Provider(provider, 'any').getSigner()
+      );
+
+      // 获取当前 nonce
+      const currentNonce = await usdcContract.nonces(account);
+
+      // First permit
+      const firstMsgParams = {
+        types: {
+          EIP712Domain: [
+            {
+              name: 'name',
+              type: 'string',
+            },
+            {
+              name: 'version',
+              type: 'string',
+            },
+            {
+              name: 'chainId',
+              type: 'uint256',
+            },
+            {
+              name: 'verifyingContract',
+              type: 'address',
+            },
+          ],
+          Permit: [
+            {
+              name: 'owner',
+              type: 'address',
+            },
+            {
+              name: 'spender',
+              type: 'address',
+            },
+            {
+              name: 'value',
+              type: 'uint256',
+            },
+            {
+              name: 'nonce',
+              type: 'uint256',
+            },
+            {
+              name: 'deadline',
+              type: 'uint256',
+            },
+          ],
+        },
+        domain: {
+          name: 'USD Coin',
+          version: '2',
+          verifyingContract: usdcAddress,
+          chainId,
+        },
+        primaryType: 'Permit',
+        message: {
+          owner: account,
+          spender,
+          value: '1000000',
+          nonce: currentNonce.toString(),
+          deadline: `1800000000`,
+        },
+      };
+      console.log('First Message Params:', JSON.stringify(firstMsgParams, null, 2));
+
+      const firstRet = await provider.request({
+        method: 'eth_signTypedData_v4',
+        params: [account, JSON.stringify(firstMsgParams)],
+      });
+      console.log('First Signature:', firstRet);
+      setFirstSignature(firstRet);
+
+      // Second permit
+      const secondMsgParams = {
+        ...firstMsgParams,
+        message: {
+          ...firstMsgParams.message,
+          value: '1000000',
+        },
+      };
+
+      console.log('Second Message Params:', JSON.stringify(secondMsgParams, null, 2));
+
+      const secondRet = await provider.request({
+        method: 'eth_signTypedData_v4',
+        params: [account, JSON.stringify(secondMsgParams)],
+      });
+      console.log('Second Signature:', secondRet);
+      setSecondSignature(secondRet);
+      
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setDoublePermitLoading(false);
+    }
+  };
+
   return (
-    <Col xs={24} lg={12}>
-      <Card direction="vertical" title="Permit & Permit2 & Permit2 Batch">
-        {
-          supportedChainIds.includes(`${chainId}`)
-            ? (
-              <Row gutter={8}>
-                <Col xs={24} lg={8}>
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit()}
-                    loading={permitLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    Permit
-                  </Button>
-                  {
-                    !!grayAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit(grayAddress)}
-                        loading={permitLoading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        Black
-                      </Button>
-                    )
-                  }
-                  {
-                    !!strongBlackAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit(strongBlackAddress)}
-                        loading={permitLoading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        StrongBlack
-                      </Button>
-                    )
-                  }
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit(myEvmAddress)}
-                    loading={permitLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    EOA
-                  </Button>
+    <>
+      <Col xs={24} lg={12}>
+        <Card direction="vertical" title="Permit & Permit2 & Permit2 Batch">
+          {
+            supportedChainIds.includes(`${chainId}`)
+              ? (
+                <Row gutter={8}>
+                  <Col xs={24} lg={8}>
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit()}
+                      loading={permitLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      Permit
+                    </Button>
+                    {
+                      !!grayAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit(grayAddress)}
+                          loading={permitLoading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          Black
+                        </Button>
+                      )
+                    }
+                    {
+                      !!strongBlackAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit(strongBlackAddress)}
+                          loading={permitLoading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          StrongBlack
+                        </Button>
+                      )
+                    }
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit(myEvmAddress)}
+                      loading={permitLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      EOA
+                    </Button>
 
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit(unKnownSpender)}
-                    loading={permit2BatchLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    unKnown Spender
-                  </Button>
-                </Col>
-                <Col xs={24} lg={8}>
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit2()}
-                    loading={permit2Loading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    Permit2
-                  </Button>
-                  {
-                    !!grayAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit2(grayAddress)}
-                        loading={permit2Loading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        Black
-                      </Button>
-                    )
-                  }
-                  {
-                    !!strongBlackAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit(strongBlackAddress)}
-                        loading={permit2Loading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        StrongBlack
-                      </Button>
-                    )
-                  }
-                  <Button
-                    block
-                    disabled={!account}
-                    loading={permit2Loading}
-                    onClick={permit2(myEvmAddress)}
-                    style={{ marginBottom: 8 }}
-                  >
-                    EOA
-                  </Button>
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit(unKnownSpender)}
+                      loading={permit2BatchLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      unKnown Spender
+                    </Button>
+                  </Col>
+                  <Col xs={24} lg={8}>
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit2()}
+                      loading={permit2Loading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      Permit2
+                    </Button>
+                    {
+                      !!grayAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit2(grayAddress)}
+                          loading={permit2Loading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          Black
+                        </Button>
+                      )
+                    }
+                    {
+                      !!strongBlackAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit(strongBlackAddress)}
+                          loading={permit2Loading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          StrongBlack
+                        </Button>
+                      )
+                    }
+                    <Button
+                      block
+                      disabled={!account}
+                      loading={permit2Loading}
+                      onClick={permit2(myEvmAddress)}
+                      style={{ marginBottom: 8 }}
+                    >
+                      EOA
+                    </Button>
 
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit2(unKnownSpender)}
-                    loading={permit2BatchLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    unKnown Spender
-                  </Button>
-                </Col>
-                <Col xs={24} lg={8}>
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit2Batch()}
-                    loading={permit2BatchLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    Permit2 Batch
-                  </Button>
-                  {
-                    !!grayAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit2Batch(grayAddress)}
-                        loading={permit2BatchLoading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        Black
-                      </Button>
-                    )
-                  }
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit2(unKnownSpender)}
+                      loading={permit2BatchLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      unKnown Spender
+                    </Button>
+                  </Col>
+                  <Col xs={24} lg={8}>
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit2Batch()}
+                      loading={permit2BatchLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      Permit2 Batch
+                    </Button>
+                    {
+                      !!grayAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit2Batch(grayAddress)}
+                          loading={permit2BatchLoading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          Black
+                        </Button>
+                      )
+                    }
 
-                  {
-                    !!strongBlackAddress && (
-                      <Button
-                        block
-                        color="danger"
-                        disabled={!account}
-                        onClick={permit(strongBlackAddress)}
-                        loading={permit2BatchLoading}
-                        style={{ marginBottom: 8 }}
-                      >
-                        StrongBlack
-                      </Button>
-                    )
-                  }
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit2Batch(myEvmAddress)}
-                    loading={permit2BatchLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    EOA
-                  </Button>
+                    {
+                      !!strongBlackAddress && (
+                        <Button
+                          block
+                          color="danger"
+                          disabled={!account}
+                          onClick={permit(strongBlackAddress)}
+                          loading={permit2BatchLoading}
+                          style={{ marginBottom: 8 }}
+                        >
+                          StrongBlack
+                        </Button>
+                      )
+                    }
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit2Batch(myEvmAddress)}
+                      loading={permit2BatchLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      EOA
+                    </Button>
 
-                  <Button
-                    block
-                    disabled={!account}
-                    onClick={permit2Batch(unKnownSpender)}
-                    loading={permit2BatchLoading}
-                    style={{ marginBottom: 8 }}
-                  >
-                    unKnown Spender
-                  </Button>
-                </Col>
-              </Row>
-            )
-            : (
+                    <Button
+                      block
+                      disabled={!account}
+                      onClick={permit2Batch(unKnownSpender)}
+                      loading={permit2BatchLoading}
+                      style={{ marginBottom: 8 }}
+                    >
+                      unKnown Spender
+                    </Button>
+                  </Col>
+                </Row>
+              )
+              : (
+                <Button
+                  block
+                  disabled={!account}
+                  onClick={() => {
+                    provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+                  }}
+                >
+                  暂不支持该网络 - 切换到 eth 主网
+                </Button>
+              )
+          }
+        </Card>
+      </Col>
+      <Col xs={24} lg={12}>
+        <Card direction="vertical" title="Double Permit">
+          <Row gutter={[8, 8]}>
+            <Col span={24}>
               <Button
                 block
                 disabled={!account}
-                onClick={() => {
-                  provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
-                }}
+                onClick={doublePermit()}
+                loading={doublePermitLoading}
+                style={{ marginBottom: 8 }}
               >
-                暂不支持该网络 - 切换到 eth 主网
+                Sign Double Permit
               </Button>
-            )
-        }
-      </Card>
-    </Col>
+            </Col>
+            <Col span={24}>
+              <Input
+                placeholder="First Signature"
+                value={firstSignature}
+                readOnly
+                style={{ marginBottom: 8 }}
+              />
+            </Col>
+            <Col span={24}>
+              <Input
+                placeholder="Second Signature"
+                value={secondSignature}
+                readOnly
+              />
+            </Col>
+          </Row>
+        </Card>
+      </Col>
+    </>
   );
 }
 
